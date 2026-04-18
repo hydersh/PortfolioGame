@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Portfolio</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: #1a1a2e; font-family: 'Courier New', monospace; height: 100%; }
+
+    #app {
+      width: 100%;
+      max-width: 1500px;
+      height: 100%;
+      margin: 0 auto;
+      position: relative;
+      min-height: 100vh;
+     
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 0;
+    }
+
+    #room-screen { width: 100%; position: relative; }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      cursor: pointer;
+    }
+
+    #dialog-box {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 88%;
+      background: #f0e8c0;
+      border: 4px solid #303030;
+      border-radius: 4px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #1a1a1a;
+      display: none;
+      text-align: center;
+      z-index: 10;
+      box-shadow: inset 0 0 0 2px #8b7355;
+    }
+    #dialog-box.show { display: block; }
+    #dialog-name {
+      font-size: 11px;
+      font-weight: bold;
+      color: #4a3a1a;
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    #page-overlay {
+      position: absolute;
+      inset: 0;
+      background: #000;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 20;
+      transition: opacity 0.5s;
+    }
+    #page-overlay.fade { opacity: 1; }
+
+    #info-page {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      background: #1a1a2e;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 24px 20px;
+      overflow-y: auto;
+    }
+    #info-page.show { display: flex; }
+
+    .page-header {
+      font-family: 'Courier New', monospace;
+      color: #f0e8c0;
+      font-size: 22px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .page-sub {
+      color: #9090b0;
+      font-size: 12px;
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+    }
+    .page-content {
+      background: #f0e8c0;
+      border: 4px solid #303030;
+      border-radius: 4px;
+      padding: 20px;
+      width: 100%;
+      max-width: 440px;
+      color: #1a1a1a;
+      font-size: 13px;
+      line-height: 1.8;
+      box-shadow: inset 0 0 0 2px #8b7355;
+    }
+    img {
+        width: 128px;
+        height: 128px;
+        border-radius: 50%;
+    
+    }
+    .page-content h3 {
+      font-size: 15px;
+      margin-bottom: 10px;
+      color: #4a2a00;
+      border-bottom: 2px solid #8b7355;
+      padding-bottom: 6px;
+    }
+    .page-content p { margin-bottom: 10px; }
+    .page-content ul { margin: 0 0 10px 16px; }
+    .page-content li { margin-bottom: 4px; }
+
+    .back-btn {
+      margin-top: 16px;
+      background: #4878c0;
+      border: 3px solid #2a4a90;
+      color: #fff;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      padding: 8px 24px;
+      cursor: pointer;
+      border-radius: 2px;
+      letter-spacing: 1px;
+    }
+    .back-btn:hover { background: #3a60a0; }
+
+    #hint {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.6);
+      color: #f0e8c0;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 2px;
+      pointer-events: none;
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    #title-bar {
+      color: #f0e8c0;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      letter-spacing: 3px;
+      margin-bottom: 8px;
+      text-align: center;
+      opacity: 0.7;
+    }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="title-bar">★ MY PORTFOLIO ★</div>
+  <div id="room-screen">
+    <canvas id="c" width="560" height="420"></canvas>
+    <div id="hint">click an icon to interact</div>
+    <div id="dialog-box">
+      <div id="dialog-name">NOTICE</div>
+      <div id="dialog-text">Walking over...</div>
+    </div>
+    <div id="page-overlay"></div>
+    <div id="info-page">
+      <div class="page-header" id="pg-title">PAGE</div>
+      <div class="page-sub" id="pg-sub">— portfolio —</div>
+      <img id="imageTest" src="test">
+      <div class="page-content" id="pg-content"></div>
+      <button class="back-btn" onclick="goBack()">← back to room</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const W = 560, H = 420;
+
+
+const pages = {
+  computer: {
+    title: 'PROJECTS',
+    sub: '— what I\'ve built —',
+    content: `
+      <h3>Featured projects</h3>
+      <ul>
+        <li><strong>Portfolio site</strong> — This very room! Built with pixel art &amp; JS.</li>
+        <li><strong>Flask using AWS/strong> — Real-time forecasts with animated icons.</li>
+  
+      </ul>
+      <p>All projects are available on GitHub.</p>
+    `
+  },
+  bookshelf: {
+    title: 'ABOUT ME',
+    sub: '— who I am —',
+    imageSrc: 'me.jpg',
+    content: `
+      <h3>Hello, traveller!</h3>
+      
+      <p>I'm a technical program who loves building beautiful, interactive experiences. Combines deep technical fluency with executive-level communication to align roadmaps, manage risk, 
+        and deliver programs ahead of schedule and under budget.</p>
+      <p>When I'm not coding, you'll find me reading (hence the bookshelf), playing games (like Pokémon), or exploring new technologies.</p>
+      <h3>Skills</h3>
+      <ul>
+        <li>JavaScript / TypeScript / React / Node.Js</li>
+        <li>Java / C++ / Python / SQL</li>
+        <li>Agile Methodologies (Scrum, Kanban), Change Management, Roadmap Development, Risk Management, Resource Allocation, Scope Management, Stakeholder Communication, Budget Management </li>
+        
+      </ul>
+    `
+  },
+  bed: {
+    title: 'CONTACT',
+    sub: '— let\'s connect —',
+    content: `
+      <h3>Get in touch</h3>
+      <p>I'm currently open to new opportunities and collaborations!</p>
+      <ul>
+        <li>&#128231; sheharyarhyder90@gmail.com</li>
+        <li>&#128025; github.com/hydersh</li>
+        <li>&#128188; linkedin.com/in/sheharyar-hyder-90</li>
+      </ul>
+      <p>Response time: usually within 24 hours.</p>
+    `
+  },
+  plant: {
+    title: 'BLOG',
+    sub: '— thoughts &amp; tutorials —',
+    content: `
+      <h3>Recent posts</h3>
+      <ul>
+        <li><strong>Hello World</strong> — Apr 2026</li>
+      </ul>
+      <p>New posts every few weeks. Topics: web dev, design, game dev.</p>
+    `
+  }
+};
+// =============================================
+
+const icons = [
+  { id: 'computer',   x: 440, y: 148, w: 32, h: 28, label: 'PROJECTS', color: '#4090d0', glyph: 'pc'   },
+  { id: 'bookshelf',  x: 82,  y: 130, w: 32, h: 28, label: 'ABOUT',    color: '#c03030', glyph: 'book' },
+  { id: 'bed',        x: 100, y: 300, w: 32, h: 28, label: 'CONTACT',  color: '#4878c0', glyph: 'bed'  },
+  { id: 'plant',      x: 500, y: 300, w: 32, h: 28, label: 'BLOG',     color: '#50a030', glyph: 'leaf' },
+];
+
+let char = { x: 270, y: 300, dir: 0, frame: 0, moving: false };
+let target = null;
+let phase = 'idle';
+let currentPage = null;
+let animFrame = 0;
+
+function drawRoom() {
+    const c = ctx;
+    c.imageSmoothingEnabled = false;
+
+    // Walls
+    c.fillStyle = '#c8b49a'; c.fillRect(60, 60, 440, 160);
+    c.fillStyle = '#b09a80'; c.fillRect(60, 60, 440, 18);
+
+    // Floor
+    c.fillStyle = '#d4a96a'; c.fillRect(60, 218, 440, 162);
+    c.fillStyle = '#8b6914'; c.fillRect(60, 216, 440, 4);
+    c.fillStyle = '#8b7355'; c.fillRect(60, 214, 440, 6);
+
+    // Floor tiles
+    c.strokeStyle = '#c49558'; c.lineWidth = 1;
+    for (let y = 248; y < 380; y += 32) { c.beginPath(); c.moveTo(60,y); c.lineTo(500,y); c.stroke(); }
+    for (let x = 96; x < 500; x += 64) { c.beginPath(); c.moveTo(x,218); c.lineTo(x,380); c.stroke(); }
+
+    // Side walls & floor border
+    c.fillStyle = '#40b040'; c.fillRect(30,60,20,260); c.fillRect(490,60,20,260);
+    c.fillStyle = '#8b6914'; c.fillRect(30,318,480,22);
+
+    // Window
+    c.fillStyle = '#8b7355'; c.fillRect(226,76,108,84);
+    c.fillStyle = '#7bbfed'; c.fillRect(230,80,100,76);
+    c.fillStyle = '#8b7355'; c.fillRect(278,80,4,76); c.fillRect(230,116,100,4);
+    c.fillStyle = '#a8d8f8'; c.globalAlpha = 0.7; c.fillRect(235,86,18,12); c.globalAlpha = 1;
+    // Curtains
+    c.fillStyle = '#e05050'; c.fillRect(210,72,28,90);
+    c.fillStyle = '#c03030'; c.fillRect(210,72,6,90);
+    c.fillStyle = '#e05050'; c.fillRect(322,72,28,90);
+    c.fillStyle = '#c03030'; c.fillRect(342,72,6,90);
+    // Rod
+    c.fillStyle = '#8b6032'; c.fillRect(204,70,152,5);
+    c.fillStyle = '#c0902a';
+    c.beginPath(); c.arc(204,72,5,0,Math.PI*2); c.fill();
+    c.beginPath(); c.arc(356,72,5,0,Math.PI*2); c.fill();
+
+    // Bookshelf
+    c.fillStyle = '#8b6032'; c.fillRect(60,82,90,130);
+    c.fillStyle = '#6b4820';
+    [82,122,162,202].forEach(y => c.fillRect(60,y,90,5));
+    const bookColors = ['#e04040','#4080e0','#40b040','#e0c040','#a040e0','#e08040',
+                        '#40c0e0','#e04080','#80e040','#c08040','#4040e0','#e04040'];
+    let bi = 0;
+    for (let row = 0; row < 3; row++) {
+      let bx = 64; const by = 90 + row*40;
+      [10,8,12,8,10,18].forEach(bw => {
+        c.fillStyle = bookColors[bi%12]; c.fillRect(bx,by,bw,28); bi++; bx += bw+2;
+      });
+    }
+
+    // Desk + computer
+    c.fillStyle = '#a06830'; c.fillRect(400,168,110,50);
+    c.fillStyle = '#c08840'; c.fillRect(400,162,110,8);
+    c.fillStyle = '#474747'; c.fillRect(400,110,80,46);
+    c.fillStyle = '#4090d0'; c.fillRect(404,114,72,38);
+    c.fillStyle = '#80c8f0'; c.fillRect(408,118,28,5);
+    c.fillStyle = '#60a8e0'; [126,134,142].forEach(y => c.fillRect(408,y,46,3));
+    c.fillStyle = '#505050'; c.fillRect(434,156,10,8);
+    c.fillStyle = '#404040'; c.fillRect(428,162,22,4);
+    c.fillStyle = '#c0c0b0'; c.fillRect(406,174,74,14);
+    c.fillStyle = '#b0b0a0';
+    for (let kx = 410; kx < 478; kx += 10) c.fillRect(kx,176,7,4);
+      c.fillRect(410,182,70,4);
+
+    // Bed
+    c.fillStyle = '#8b6032'; c.fillRect(60,228,130,122);
+    c.fillStyle = '#7a5028'; c.fillRect(60,220,130,12);
+    c.fillStyle = '#e8e0d0'; c.fillRect(66,232,118,112);
+    c.fillStyle = '#f0f0f0'; c.fillRect(72,236,44,28);
+    c.fillStyle = '#e8e8e8'; c.fillRect(74,238,40,24);
+    c.fillStyle = '#4878c0'; c.fillRect(66,264,118,82);
+    c.fillStyle = '#3a68b0'; [274,290,306,322].forEach(y => c.fillRect(66,y,118,5));
+    c.fillStyle = '#f0f0f0'; c.fillRect(66,264,118,11);
+    c.fillStyle = '#c0802a';
+    c.beginPath(); c.arc(70,220,7,0,Math.PI*2); c.fill();
+    c.beginPath(); c.arc(186,220,7,0,Math.PI*2); c.fill();
+
+    // Rug
+    c.fillStyle = '#d04040'; c.fillRect(200,252,180,104);
+    c.fillStyle = '#c03030'; c.fillRect(208,260,164,88);
+    c.strokeStyle = '#e06060'; c.lineWidth = 3; c.strokeRect(212,264,140,78);
+    c.fillStyle = '#e06060';
+    const cx2=290, cy2=302, sz=22;
+    c.save(); c.translate(cx2,cy2); c.rotate(Math.PI/4);
+    c.fillRect(-sz/2,-sz/2,sz,sz);
+    c.fillStyle = '#c03030'; c.fillRect(-sz/2+4,-sz/2+4,sz-8,sz-8);
+    c.restore();
+
+    // Plant
+    c.fillStyle = '#406020'; c.fillRect(490,272,4,58);
+    c.fillStyle = '#50a030';
+    ctx.beginPath(); ctx.ellipse(492,280,22,12,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(482,298,16,9,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(504,293,18,9,0,0,Math.PI*2); ctx.fill();
+    c.fillStyle = '#c06830'; c.fillRect(476,328,38,32);
+    c.fillStyle = '#a05020'; c.fillRect(470,324,50,8);
+    c.fillStyle = '#5a3a10'; c.fillRect(478,326,34,8);
+
+    // Nightstand + lamp
+    c.fillStyle = '#a06830'; c.fillRect(198,250,40,32);
+    c.fillStyle = '#c08840'; c.fillRect(196,244,44,8);
+    c.fillStyle = '#f0e060'; c.fillRect(214,226,10,20); c.fillRect(208,220,22,8);
+
+    // Door
+    c.fillStyle = '#a06830'; c.fillRect(370,80,52,132);
+    c.fillStyle = '#6b4820'; c.strokeStyle='#6b4820'; c.lineWidth=4;
+    c.strokeRect(368,78,56,136);
+    c.fillStyle = '#8b5820'; c.fillRect(374,90,40,40); c.fillRect(374,138,40,64);
+    c.fillStyle = '#d0a030';
+    c.beginPath(); c.arc(408,158,5,0,Math.PI*2); c.fill();
+
+    // Picture frame
+    c.fillStyle = '#8b7355'; c.fillRect(158,88,64,50);
+    c.fillStyle = '#c8e0f8'; c.fillRect(162,92,56,42);
+    c.fillStyle = '#e0a060'; c.fillRect(162,110,56,24);
+    c.fillStyle = '#f8d040';
+    c.beginPath(); c.arc(190,107,10,0,Math.PI*2); c.fill();
+    c.fillStyle = '#60a0e0'; c.fillRect(162,120,56,14);
+}
+
+function drawIconSprite(ic) {
+    const pulse = phase === 'idle';
+    const s = pulse ? 1 + 0.06*Math.sin(animFrame*0.1) : 1;
+    ctx.save();
+    ctx.translate(ic.x + ic.w/2, ic.y - 10);
+    ctx.scale(s, s);
+
+    ctx.fillStyle = ic.color;
+    ctx.fillRect(-16,-14,32,28);
+    ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2;
+    ctx.strokeRect(-16,-14,32,28);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px Courier New';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const glyphs = { pc:'PC', book:'AB', bed:'ZZ', leaf:'BL' };
+    ctx.fillText(glyphs[ic.glyph] || '?', 0, 0);
+
+    ctx.fillStyle = '#f0e8c0';
+    ctx.font = 'bold 9px Courier New';
+    ctx.fillText(ic.label, 0, 22);
+    ctx.restore();
+}
+
+function drawChar() {
+  const x = Math.round(char.x), y = Math.round(char.y);
+  const f = char.moving ? Math.floor(animFrame/8)%4 : 0;
+  const legOff = [0,2,0,-2][f];
+
+  // Head
+  ctx.fillStyle = '#f0c080'; ctx.fillRect(x-5, y-24, 10, 10);
+  // Body
+  ctx.fillStyle = '#4878c0'; ctx.fillRect(x-6, y-14, 12, 14);
+  // Arms
+  ctx.fillStyle = '#f0c080'; ctx.fillRect(x-8, y-12, 4, 8); ctx.fillRect(x+4, y-12, 4, 8);
+  // Legs
+  ctx.fillStyle = '#303090';
+  ctx.fillRect(x-5, y, 4, 10+legOff);
+  ctx.fillRect(x+1, y, 4, 10-legOff);
+  // Eyes
+  ctx.fillStyle = '#1a1a1a';
+  const eyeY = y - 20;
+  if (char.dir === 0) {
+    ctx.fillRect(x-3, eyeY, 2, 2); ctx.fillRect(x+1, eyeY, 2, 2);
+  } else if (char.dir === 1) {
+    ctx.fillRect(x+2, eyeY, 2, 2);
+  } else if (char.dir === 2) {
+    ctx.fillRect(x-3, eyeY, 2, 2);
+  } else {
+    ctx.fillRect(x-2, eyeY+2, 2, 2); ctx.fillRect(x+1, eyeY+2, 2, 2);
+  }
+}
+
+function showDialog(name, text) {
+  const db = document.getElementById('dialog-box');
+  document.getElementById('dialog-name').textContent = name;
+  document.getElementById('dialog-text').textContent = text;
+  db.classList.add('show');
+}
+function hideDialog() {
+  document.getElementById('dialog-box').classList.remove('show');
+}
+
+function openPage(id) {
+  const pg = pages[id];
+  if (!pg) return;
+  document.getElementById('pg-title').textContent = pg.title;
+  document.getElementById('pg-sub').textContent = pg.sub;
+  document.getElementById('imageTest').src = pg.imageSrc;
+  document.getElementById('pg-content').innerHTML = pg.content;
+  const ov = document.getElementById('page-overlay');
+  ov.classList.add('fade');
+  setTimeout(() => {
+    document.getElementById('info-page').classList.add('show');
+    ov.classList.remove('fade');
+  }, 500);
+}
+
+function goBack() {
+  const ov = document.getElementById('page-overlay');
+  ov.classList.add('fade');
+  setTimeout(() => {
+    document.getElementById('info-page').classList.remove('show');
+    ov.classList.remove('fade');
+    phase = 'idle';
+    currentPage = null;
+  }, 500);
+}
+
+canvas.addEventListener('click', (e) => {
+  if (phase !== 'idle') return;
+  const rect = canvas.getBoundingClientRect();
+  const sx = W / rect.width;
+  const sy = H / rect.height;
+  const mx = (e.clientX - rect.left) * sx;
+  const my = (e.clientY - rect.top) * sy;
+
+  for (const ic of icons) {
+    const hw = ic.w/2 + 20, hh = ic.h + 30;
+    if (mx >= ic.x + ic.w/2 - hw && mx <= ic.x + ic.w/2 + hw &&
+        my >= ic.y - 30 && my <= ic.y + ic.h + 20) {
+      startWalk(ic);
+      return;
+    }
+  }
+});
+
+function startWalk(ic) {
+  phase = 'walking';
+  currentPage = ic.id;
+  target = { x: ic.x + ic.w/2, y: ic.y + ic.h + 24 };
+  const dx = target.x - char.x;
+  if (Math.abs(dx) > 4) char.dir = dx > 0 ? 1 : 2;
+  showDialog('PLAYER', 'Going to ' + ic.label + '...');
+}
+
+let lastTime = 0;
+function loop(ts) {
+  requestAnimationFrame(loop);
+  if (ts - lastTime < 33) return;
+  lastTime = ts;
+  animFrame++;
+
+  ctx.clearRect(0, 0, W, H);
+  drawRoom();
+  icons.forEach(ic => drawIconSprite(ic));
+
+  if (phase === 'walking' && target) {
+    const dx = target.x - char.x;
+    const dy = target.y - char.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist < 4) {
+      char.x = target.x; char.y = target.y;
+      char.moving = false;
+      phase = 'arrived';
+      char.dir = 0;
+      hideDialog();
+      setTimeout(() => openPage(currentPage), 300);
+    } else {
+      const spd = Math.min(3, dist);
+      char.x += (dx/dist)*spd;
+      char.y += (dy/dist)*spd;
+      char.moving = true;
+      if (Math.abs(dx) > Math.abs(dy)) char.dir = dx > 0 ? 1 : 2;
+      else char.dir = dy > 0 ? 3 : 0;
+    }
+  } else if (phase !== 'walking') {
+    char.moving = false;
+  }
+
+  drawChar();
+}
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
