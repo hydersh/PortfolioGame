@@ -99,7 +99,7 @@
       color: #9090b0;
       font-size: 12px;
       margin-bottom: 20px;
-      letter-spacing: 1px;
+      letter-spaacing: 1px;
     }
     .page-content {
       background: #f0e8c0;
@@ -112,6 +112,12 @@
       font-size: 13px;
       line-height: 1.8;
       box-shadow: inset 0 0 0 2px #8b7355;
+    }
+    .imgTest {
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+    
     }
     img {
         width: 128px;
@@ -185,7 +191,7 @@
     <div id="info-page">
       <div class="page-header" id="pg-title">PAGE</div>
       <div class="page-sub" id="pg-sub">— portfolio —</div>
-      <img id="imageTest" src="test">
+      <img id="imgT">
       <div class="page-content" id="pg-content"></div>
       <button class="back-btn" onclick="goBack()">← back to room</button>
     </div>
@@ -202,6 +208,7 @@ const pages = {
   computer: {
     title: 'PROJECTS',
     sub: '— what I\'ve built —',
+    imageSrc: 'me.jpg',
     content: `
       <h3>Featured projects</h3>
       <ul>
@@ -234,6 +241,7 @@ const pages = {
   bed: {
     title: 'CONTACT',
     sub: '— let\'s connect —',
+    imageSrc: '',
     content: `
       <h3>Get in touch</h3>
       <p>I'm currently open to new opportunities and collaborations!</p>
@@ -248,10 +256,11 @@ const pages = {
   plant: {
     title: 'BLOG',
     sub: '— thoughts &amp; tutorials —',
+    imageSrc: '',
     content: `
       <h3>Recent posts</h3>
       <ul>
-        <li><strong>Hello World</strong> — Apr 2026</li>
+        <li><strong>Hello World, test!</strong> — Apr 2026</li>
       </ul>
       <p>New posts every few weeks. Topics: web dev, design, game dev.</p>
     `
@@ -463,7 +472,13 @@ function openPage(id) {
   if (!pg) return;
   document.getElementById('pg-title').textContent = pg.title;
   document.getElementById('pg-sub').textContent = pg.sub;
-  document.getElementById('imageTest').src = pg.imageSrc;
+  if (pg.title == "ABOUT ME" ) {
+    document.getElementById('imgT').src = pg.imageSrc;
+  } 
+  else {
+    document.getElementById('imgT').style.display = "none";
+  }
+
   document.getElementById('pg-content').innerHTML = pg.content;
   const ov = document.getElementById('page-overlay');
   ov.classList.add('fade');

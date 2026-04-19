@@ -114,7 +114,6 @@
       box-shadow: inset 0 0 0 2px #8b7355;
     }
     img {
-        display: none;
         width: 128px;
         height: 128px;
         border: none;
@@ -186,7 +185,7 @@
     <div id="info-page">
       <div class="page-header" id="pg-title">PAGE</div>
       <div class="page-sub" id="pg-sub">— portfolio —</div>
-      <img id="imageTest" src="test">
+      <img id="imageTest">
       <div class="page-content" id="pg-content"></div>
       <button class="back-btn" onclick="goBack()">← back to room</button>
     </div>
@@ -203,6 +202,7 @@ const pages = {
   computer: {
     title: 'PROJECTS',
     sub: '— what I\'ve built —',
+    imageSrc: '',
     content: `
       <h3>Featured projects</h3>
       <ul>
@@ -235,6 +235,7 @@ const pages = {
   bed: {
     title: 'CONTACT',
     sub: '— let\'s connect —',
+    imageSrc: '',
     content: `
       <h3>Get in touch</h3>
       <p>I'm currently open to new opportunities and collaborations!</p>
@@ -249,6 +250,7 @@ const pages = {
   plant: {
     title: 'BLOG',
     sub: '— thoughts &amp; tutorials —',
+    imageSrc: '',
     content: `
       <h3>Recent posts</h3>
       <ul>
@@ -466,8 +468,8 @@ function openPage(id) {
   document.getElementById('pg-sub').textContent = pg.sub;
   if (pg.imageSrc) {
     document.getElementById('imageTest').src = pg.imageSrc;
-    document.getElementById('imageTest').style.borderRadius = "50%"; 
-  }
+    document.getElementById('imageTest').style.borderRadius = "25px"; 
+  } 
 
   document.getElementById('pg-content').innerHTML = pg.content;
   const ov = document.getElementById('page-overlay');
